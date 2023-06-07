@@ -39,6 +39,7 @@ func RequestHandler(c *gin.Context) {
 	}
 
 	c.Request.Header.Set("Origin", ORIGIN)
+	c.Request.Header.Set("Accept-Encoding", "*")
 
 	if c.IsWebsocket() {
 		proxy.ServeHTTP(c.Writer, c.Request)
@@ -72,7 +73,7 @@ func RequestHandler(c *gin.Context) {
 	err = json.Unmarshal(bodyBytes, &bodyJson)
 
 	if err != nil {
-		log.Println("Unable to transform response body to json)")
+		log.Println("Unable to transform response body to json) ", err.Error())
 	}
 
 	c.JSON(http.StatusOK, bodyJson)

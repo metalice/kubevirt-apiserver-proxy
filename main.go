@@ -14,7 +14,7 @@ func main() {
 
 	log.Println("listening for server 8080")
 
-	err := server.Run() // listen and serve on 0.0.0.0:8080
+	err := server.RunTLS(":8080", "./cert/tls.crt", "./cert/tls.key") // listen and serve on 0.0.0.0:8080
 
 	if err != nil {
 		log.Println("Failed to start server: ", err.Error())
