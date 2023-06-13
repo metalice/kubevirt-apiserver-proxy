@@ -30,7 +30,7 @@ spec:
     spec:
       containers:
         - name: kubevirt-apiserver-proxy
-          image: "quay.io/mschatzm/kubevirt-apiserver-proxy"
+          image: "quay.io/kubevirt-ui/kubevirt-apiserver-proxy"
           ports:
             - containerPort: 8080
               protocol: TCP
@@ -94,4 +94,3 @@ This yaml will create 3 resources.
 1. Deployment (pod where the proxy will run)
 2. Service
 3. Route (in production mode this will not be created - instead kubevirt-plugin will be added to include a proxy so this route is not needed)
-
