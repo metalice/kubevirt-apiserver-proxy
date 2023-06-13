@@ -13,24 +13,24 @@ Save this YAML to a file locally:
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: kubevirt-proxy-pod
+  name: kubevirt-apiserver-proxy
   namespace: openshift-cnv
   labels:
-    app: kubevirt-proxy-pod
+    app: kubevirt-apiserver-proxy
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: kubevirt-proxy-pod
+      app: kubevirt-apiserver-proxy
   template:
     metadata:
       creationTimestamp: null
       labels:
-        app: kubevirt-proxy-pod
+        app: kubevirt-apiserver-proxy
     spec:
       containers:
-        - name: kubevirt-proxy-pod
-          image: "quay.io/mschatzm/kubevirt-proxy-pod:test"
+        - name: kubevirt-apiserver-proxy
+          image: "quay.io/mschatzm/kubevirt-apiserver-proxy"
           ports:
             - containerPort: 8080
               protocol: TCP
@@ -42,7 +42,7 @@ spec:
       volumes:
         - name: cert
           secret:
-            secretName: kubevirt-proxy-cert
+            secretName: kubevirt-apiserver-proxy-cert
             optional: true
   strategy:
     type: RollingUpdate
@@ -54,10 +54,10 @@ spec:
 kind: Service
 apiVersion: v1
 metadata:
-  name: kubevirt-proxy-pod
+  name: kubevirt-apiserver-proxy
   namespace: openshift-cnv
   annotations:
-    service.beta.openshift.io/serving-cert-secret-name: kubevirt-proxy-cert
+    service.beta.openshift.io/serving-cert-secret-name: kubevirt-apiserver-proxy-cert
 spec:
   ipFamilies:
     - IPv4
@@ -66,21 +66,21 @@ spec:
       port: 80
       targetPort: 8080
   selector:
-    app: kubevirt-proxy-pod
+    app: kubevirt-apiserver-proxy
 
 ---
 kind: Route
 apiVersion: route.openshift.io/v1
 metadata:
-  name: kubevirt-proxy-pod
+  name: kubevirt-apiserver-proxy
   namespace: openshift-cnv
   annotations:
     haproxy.router.openshift.io/hsts_header: max-age=31536000;includeSubDomains;preload
 spec:
-  host: $HOST #example: kubevirt-proxy-pod-openshift-cnv.apps.uit-413-0602.rhos-psi.cnv-qe.rhood.us
+  host: $HOST #example: kubevirt-apiserver-proxy-openshift-cnv.apps.uit-413-0602.rhos-psi.cnv-qe.rhood.us
   to:
     kind: Service
-    name: kubevirt-proxy-pod
+    name: kubevirt-apiserver-proxy
     weight: 100
   port:
     targetPort: 8080

@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubevirt-ui/kubevirt-proxy-data/handlers"
+	"github.com/kubevirt-ui/kubevirt-apiserver-proxy/handlers"
 )
 
 func main() {
