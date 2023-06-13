@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubevirt-ui/kubevirt-proxy-data/proxy"
+	"github.com/kubevirt-ui/kubevirt-apiserver-proxy/proxy"
 )
 
 var API_SERVER_URL string = "kubernetes.default.svc"

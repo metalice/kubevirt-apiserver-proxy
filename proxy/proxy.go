@@ -9,7 +9,7 @@ import (
 	"sync"
 
 	"github.com/gorilla/websocket"
-	"github.com/kubevirt-ui/kubevirt-proxy-data/util"
+	"github.com/kubevirt-ui/kubevirt-apiserver-proxy/util"
 )
 
 type Config struct {

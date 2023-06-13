@@ -1,4 +1,4 @@
-module github.com/kubevirt-ui/kubevirt-proxy-data
+module github.com/kubevirt-ui/kubevirt-apiserver-proxy
 
 go 1.20
 
