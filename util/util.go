@@ -2,13 +2,18 @@ package util
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/tidwall/gjson"
+	"golang.org/x/exp/slices"
 )
 
 var HeaderBlacklist = []string{"Cookie", "X-CSRFToken"}
@@ -54,7 +59,7 @@ func DecodeSubprotocol(encodedProtocol string) (string, error) {
 	return string(decodedProtocol), err
 }
 
-func CopyMsgs(writeMutex *sync.Mutex, dest, src *websocket.Conn) error {
+func CopyMsgs(writeMutex *sync.Mutex, dest *websocket.Conn, src *websocket.Conn) error {
 	for {
 		messageType, msg, err := src.ReadMessage()
 		if err != nil {
@@ -154,4 +159,100 @@ func CreateProxyHeaders(w http.ResponseWriter, r *http.Request) (http.Header, st
 	}
 
 	return proxiedHeader, subProtocol, nil
+}
+
+func labelsIncludes(labels map[string]interface{}, label string) bool {
+	splitLabel := strings.Split(label, "=")
+	return labels[splitLabel[0]] == splitLabel[1]
+}
+
+func isMigratable(statuses []interface{}, search string) bool {
+	indexOfItem := slices.IndexFunc(statuses, func(status interface{}) bool {
+		return status.(map[string]interface{})["type"] == "LiveMigratable" && status.(map[string]interface{})["status"] == "True"
+	})
+	isMigrate := indexOfItem != -1
+	if search == "notMigratable" && isMigrate {
+		return false
+	}
+
+	if search == "migratable" && !isMigrate {
+		return false
+	}
+
+	return true
+}
+
+func FilterResponseQuery(bodyBytes []byte, query url.Values) map[string]interface{} {
+	items := gjson.ParseBytes(bodyBytes).Get("items").Array()
+	filteredJson := []interface{}{}
+	isFilters := len(query) != 0
+	if isFilters {
+	nextItem:
+		for _, item := range items {
+			for key, val := range query {
+				for _, match := range val {
+					itemValue := item.Get(key)
+					matches := strings.Split(match, ",")
+					isMatch := false
+					for index, search := range matches {
+						switch typeResult := itemValue.Type.String(); typeResult {
+						case "JSON":
+							{
+								// case of json and all conditions (and) must apply (labels by input)
+								if key == "status.conditions" {
+									isMigrate := isMigratable(itemValue.Value().([]interface{}), search)
+									if !isMigrate {
+										continue nextItem
+									}
+									continue
+								}
+								okInclude := labelsIncludes(itemValue.Value().(map[string]interface{}), search)
+								if !okInclude {
+									continue nextItem
+								}
+							}
+
+						case "String":
+							{
+								//case of string and at least one must match (or) apply (name, template, status, os)
+								okString := strings.Contains(strings.ToLower(itemValue.Str), strings.ToLower(search))
+								if okString {
+									isMatch = true
+									break
+								}
+								if index == len(matches)-1 && !isMatch {
+									continue nextItem
+								}
+							}
+						case "Null":
+							{
+								if strings.ToLower(search) == "null" {
+									break
+								}
+								continue nextItem
+							}
+						default:
+							continue nextItem
+						}
+					}
+				}
+			}
+			valueJson := map[string]interface{}{}
+			err := json.Unmarshal([]byte(item.Raw), &valueJson)
+			if err != nil {
+				log.Println("error creating json of item: ", err.Error())
+			} else {
+				filteredJson = append(filteredJson, valueJson)
+			}
+		}
+	}
+
+	returnJson := map[string]interface{}{}
+	json.Unmarshal(bodyBytes, &returnJson)
+	returnJson["totalItems"] = len(items)
+	if isFilters {
+		returnJson["items"] = filteredJson
+	}
+
+	return returnJson
 }

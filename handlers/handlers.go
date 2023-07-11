@@ -2,13 +2,13 @@ package handlers
 
 import (
 	"crypto/tls"
-	"encoding/json"
 	"io"
 	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kubevirt-ui/kubevirt-apiserver-proxy/proxy"
+	"github.com/kubevirt-ui/kubevirt-apiserver-proxy/util"
 )
 
 var API_SERVER_URL string = "kubernetes.default.svc"
@@ -69,13 +69,12 @@ func RequestHandler(c *gin.Context) {
 	}
 
 	defer resp.Body.Close()
-	bodyJson := map[string]interface{}{}
-	err = json.Unmarshal(bodyBytes, &bodyJson)
+	filteredJson := util.FilterResponseQuery(bodyBytes, c.Request.URL.Query())
 
 	if err != nil {
 		log.Println("Unable to transform response body to json) ", err.Error())
 	}
 
-	c.JSON(http.StatusOK, bodyJson)
+	c.JSON(http.StatusOK, filteredJson)
 
 }
