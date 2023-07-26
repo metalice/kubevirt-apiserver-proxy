@@ -114,6 +114,7 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var writeMutex sync.Mutex // Needed because ticker & copy are writing to frontend in separate goroutines
 
 	defer func() {
+		resp.Body.Close()
 		backend.Close()
 		frontend.Close()
 	}()

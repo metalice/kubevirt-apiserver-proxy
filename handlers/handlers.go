@@ -16,6 +16,7 @@ var PROTOCOL string = "https"
 var ORIGIN = "http://localhost"
 
 func HealthHandler(c *gin.Context) {
+	defer c.Request.Body.Close()
 	c.String(200, "OK")
 }
 
@@ -40,7 +41,7 @@ func RequestHandler(c *gin.Context) {
 
 	c.Request.Header.Set("Origin", ORIGIN)
 	c.Request.Header.Set("Accept-Encoding", "*")
-
+	defer c.Request.Body.Close()
 	if c.IsWebsocket() {
 		proxy.ServeHTTP(c.Writer, c.Request)
 		return
