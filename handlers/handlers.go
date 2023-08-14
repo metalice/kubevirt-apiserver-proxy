@@ -42,40 +42,42 @@ func RequestHandler(c *gin.Context) {
 	c.Request.Header.Set("Origin", ORIGIN)
 	c.Request.Header.Set("Accept-Encoding", "*")
 	defer c.Request.Body.Close()
+
 	if c.IsWebsocket() {
+
 		proxy.ServeHTTP(c.Writer, c.Request)
-		return
+
+	} else {
+
+		tr := &http.Transport{
+			TLSClientConfig: tlsConf, // TODO: add a check for PROD / DEV mode
+		}
+
+		cr := func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		}
+
+		httpClient := http.Client{Transport: tr, CheckRedirect: cr}
+
+		c.Request.RequestURI = ""
+		resp, err := httpClient.Do(c.Request)
+		if err != nil {
+			log.Println("Failed to initiate call to kube api server: ", err.Error())
+		}
+
+		bodyBytes, err := io.ReadAll(resp.Body)
+
+		if err != nil {
+			log.Println("Failed to read response body: ", err.Error())
+		}
+
+		defer resp.Body.Close()
+		filteredJson := util.FilterResponseQuery(bodyBytes, c.Request.URL.Query())
+
+		if err != nil {
+			log.Println("Unable to transform response body to json) ", err.Error())
+		}
+
+		c.JSON(http.StatusOK, filteredJson)
 	}
-
-	tr := &http.Transport{
-		TLSClientConfig: tlsConf, // TODO: add a check for PROD / DEV mode
-	}
-
-	cr := func(req *http.Request, via []*http.Request) error {
-		return http.ErrUseLastResponse
-	}
-
-	httpClient := http.Client{Transport: tr, CheckRedirect: cr}
-
-	c.Request.RequestURI = ""
-	resp, err := httpClient.Do(c.Request)
-	if err != nil {
-		log.Println("Failed to initiate call to kube api server: ", err.Error())
-	}
-
-	bodyBytes, err := io.ReadAll(resp.Body)
-
-	if err != nil {
-		log.Println("Failed to read response body: ", err.Error())
-	}
-
-	defer resp.Body.Close()
-	filteredJson := util.FilterResponseQuery(bodyBytes, c.Request.URL.Query())
-
-	if err != nil {
-		log.Println("Unable to transform response body to json) ", err.Error())
-	}
-
-	c.JSON(http.StatusOK, filteredJson)
-
 }

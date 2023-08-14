@@ -25,7 +25,7 @@ func main() {
 
 	err := server.RunTLS(":8080", "./cert/tls.crt", "./cert/tls.key") // listen and serve on 0.0.0.0:8080
 
-	log.Printf("listening for server 8080 - v0.0.5 - API cache time: %v", API_CACHE_TIME)
+	log.Printf("listening for server 8080 - v0.0.6 - API cache time: %v", API_CACHE_TIME)
 
 	if err != nil {
 		log.Println("Failed to start server: ", err.Error())
