@@ -23,9 +23,9 @@ func main() {
 	server.GET("/health", cache.CacheByRequestURI(memoryStore, HEALTH_CACHE_TIME), handlers.HealthHandler)
 	server.GET("/apis/*path", cache.CacheByRequestURI(memoryStore, API_CACHE_TIME), handlers.RequestHandler)
 
-	err := server.RunTLS(":8080", "./cert/tls.crt", "./cert/tls.key") // listen and serve on 0.0.0.0:8080
+	log.Printf("listening for server 8080 - v0.0.7 - API cache time: %v", API_CACHE_TIME)
 
-	log.Printf("listening for server 8080 - v0.0.6 - API cache time: %v", API_CACHE_TIME)
+	err := server.RunTLS(":8080", "./cert/tls.crt", "./cert/tls.key") // listen and serve on 0.0.0.0:8080
 
 	if err != nil {
 		log.Println("Failed to start server: ", err.Error())

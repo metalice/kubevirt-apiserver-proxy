@@ -78,6 +78,6 @@ func RequestHandler(c *gin.Context) {
 			log.Println("Unable to transform response body to json) ", err.Error())
 		}
 
-		c.JSON(http.StatusOK, filteredJson)
+		c.JSON(resp.StatusCode, filteredJson)
 	}
 }
