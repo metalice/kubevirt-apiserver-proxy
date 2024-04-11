@@ -182,6 +182,21 @@ func isMigratable(statuses []interface{}, search string) bool {
 	return true
 }
 
+func isIPExist(interfaces []interface{}, search string) bool {
+	result := false
+	for _, nic := range interfaces {
+		nicsArr := nic.(map[string]interface{})["ipAddresses"].([]interface{})
+		isExist := slices.ContainsFunc(nicsArr, func(ip interface{}) bool {
+			return strings.Contains(ip.(string), search)
+		})
+		if isExist {
+			result = true
+			break
+		}
+	}
+	return result
+}
+
 func FilterResponseQuery(bodyBytes []byte, query url.Values) map[string]interface{} {
 	items := gjson.ParseBytes(bodyBytes).Get("items").Array()
 	filteredJson := []interface{}{}
@@ -202,6 +217,13 @@ func FilterResponseQuery(bodyBytes []byte, query url.Values) map[string]interfac
 								if key == "status.conditions" {
 									isMigrate := isMigratable(itemValue.Value().([]interface{}), search)
 									if !isMigrate {
+										continue nextItem
+									}
+									continue
+								}
+								if key == "status.interfaces" {
+									isIP := isIPExist(itemValue.Value().([]interface{}), search)
+									if !isIP {
 										continue nextItem
 									}
 									continue
